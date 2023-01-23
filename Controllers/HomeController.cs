@@ -1,21 +1,30 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using Tangy.Data;
 using Tangy.Models;
+using Tangy.Models.HomeViewModel;
 
 namespace Tangy.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ApplicationDbContext _db;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ApplicationDbContext db)
         {
-            _logger = logger;
+            _db = db;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            IndexViewModel IndexVM = new IndexViewModel()
+            {
+                MenuItem = await _db.MenuItem.Include(m => m.Category).Include(m => m.SubCategory).ToListAsync(),
+                Category = _db.Category.OrderBy(c => c.DisplayOrder),
+                Coupons = _db.Coupons.Where(c => c.isActive == true).ToList()
+            };
+            return View(IndexVM);
         }
 
         public IActionResult Privacy()
